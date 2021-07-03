@@ -1,10 +1,14 @@
 const express = require('express');
 const app = express();
 const morgan = require('morgan');
-const productRoute = require('./routes/products')
-const orderRoute = require('./routes/orders')
+const mongoose = require('mongoose');
+const productRoute = require('./routes/products');
+const orderRoute = require('./routes/orders');
 
-app.use(morgan('tiny'))
+
+require('dotenv').config()
+// for showing the request and response console
+app.use(morgan('tiny'));
 
 // extended true allows us to pass rich data in it
 app.use(express.urlencoded({extended:true}));
@@ -38,6 +42,12 @@ app.use((req,res,next) => {
         return res.status(200).json({})
     }
 
+})
+
+// Database:
+connection_uri = process.env.DB_URI
+mongoose.connect(connection_uri,{useNewUrlParser: true,useUnifiedTopology:true },() =>{
+    console.log('MongoDB Atlas Connected!');
 })
 
 module.exports = app;
