@@ -6,12 +6,25 @@ const Product = require('../models/products');
 
 router.get('/',(req,res,next) => {
     Product.find()
+        .select('productName productPrice _id')
         .then((docs) => {
-            if(docs.length <= 0){
-                res.status(404).json({'Not Found Error':'No Entries Found'})
-            }else{
-                res.status(200).json({message:'Listing all the Products',docs})
-            }
+            const response = {
+                count:docs.length,
+
+                // we can also send some meta information in products which would help the client side 
+                products:docs.map((data) => {
+                    return {
+                        productName:data.productName,
+                        productPrice:data.productPrice,
+                        _id:data._id,
+                        request:{
+                            method:"GET",
+                            url:"http://localhost:3000/products/"+data._id
+                        }
+                    }
+                })
+            };
+        res.status(200).json({message:'Listing all the Products',response})
         })
         .catch((err) => {
             res.status(500).json({message:'No Entries Found',error:err})
@@ -27,27 +40,24 @@ router.post('/',(req,res,next) => {
     })
 
     product.save()
-        .then((result) => {console.log(result)})
+        .then((result) => 
+        res.status(201).json({
+            message:'Product Created Successfully!',
+            createdBody:{
+                productName:result.productName,
+                productPrice:result.productPrice,
+                _id:result._id,
+                request:{
+                    method:'POST',
+                    url:"http://localhost:3000/products/"+result._id
+                }
+            }
+        }))
         .catch((err) => {console.log(err)});
 
-    res.status(201).json({
-        message:'posting the product',
-        createdBody:product
-    });
+  
 });
 
-router.get('/:productName',(req,res,next) => {
-    const name = req.params.productName;
-    Product.find({productName:name})
-        .then(doc => { 
-          if(doc.length <= 0){
-            res.status(404).json({error:'No Valid Entry Found'})
-          }else{
-            res.status(200).json(doc)
-          } 
-        })
-        .catch(err =>{ console.log(err); res.status(500).json({error:err}); })
-});
 
 router.get('/:productId',(req,res,next) => {
     const id = req.params.productId;
